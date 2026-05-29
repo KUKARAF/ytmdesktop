@@ -61,6 +61,7 @@ const companionServerAuthTokens = ref<AuthToken[]>(
 const companionServerCORSWildcardEnabled = ref<boolean>(integrations.companionServerCORSWildcardEnabled);
 const discordPresenceEnabled = ref<boolean>(integrations.discordPresenceEnabled);
 const lastFMEnabled = ref<boolean>(integrations.lastFMEnabled);
+const adBlockerEnabled = ref<boolean>(integrations.adBlockerEnabled);
 
 const shortcutPlayPause = ref<string>(shortcuts.playPause);
 const shortcutNext = ref<string>(shortcuts.next);
@@ -99,6 +100,7 @@ store.onDidAnyChange(async newState => {
   companionServerCORSWildcardEnabled.value = newState.integrations.companionServerCORSWildcardEnabled;
   discordPresenceEnabled.value = newState.integrations.discordPresenceEnabled;
   lastFMEnabled.value = newState.integrations.lastFMEnabled;
+  adBlockerEnabled.value = newState.integrations.adBlockerEnabled;
   lastFMSessionKey.value = newState.lastfm.sessionKey;
   scrobblePercent.value = newState.lastfm.scrobblePercent;
 
@@ -169,6 +171,7 @@ async function settingsChanged() {
   store.set("integrations.companionServerCORSWildcardEnabled", companionServerCORSWildcardEnabled.value);
   store.set("integrations.discordPresenceEnabled", discordPresenceEnabled.value);
   store.set("integrations.lastFMEnabled", lastFMEnabled.value);
+  store.set("integrations.adBlockerEnabled", adBlockerEnabled.value);
   store.set("lastfm.scrobblePercent", scrobblePercent.value);
 
   store.set("shortcuts.playPause", shortcutPlayPause.value);
@@ -402,6 +405,13 @@ window.ytmd.handleUpdateDownloaded(() => {
               <td>No authorized companions</td>
             </div>
           </YTMDSetting>
+          <YTMDSetting
+            v-model="adBlockerEnabled"
+            type="checkbox"
+            name="Ad blocker"
+            description="Blocks ads and trackers on YouTube Music using uBlock Origin filter lists"
+            @change="settingsChanged"
+          />
           <YTMDSetting v-model="discordPresenceEnabled" type="checkbox" name="Discord rich presence" @change="settingsChanged" />
           <div v-if="discordPresenceEnabled && discordPresenceConnectionFailed" class="setting indented">
             <p class="discord-failure">Discord connection could not be established after 30 attempts</p>

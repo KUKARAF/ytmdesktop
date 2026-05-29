@@ -28,6 +28,7 @@ import MemoryStore from "./memory-store";
 import playerStateStore, { PlayerState, VideoState } from "./player-state-store";
 import { MemoryStoreSchema, StoreSchema, TrayIconStyle } from "../shared/store/schema";
 
+import AdBlocker from "./integrations/ad-blocker";
 import CompanionServer from "./integrations/companion-server";
 import CustomCSS from "./integrations/custom-css";
 import DiscordPresence from "./integrations/discord-presence";
@@ -161,6 +162,7 @@ const template: MenuItemConstructorOptions[] = [{ role: "appMenu", label: "YouTu
 const builtMenu = isDarwin ? Menu.buildFromTemplate(template) : null; // null for performance https://www.electronjs.org/docs/latest/tutorial/performance#8-call-menusetapplicationmenunull-when-you-do-not-need-a-default-menu
 Menu.setApplicationMenu(builtMenu);
 
+const adBlocker = new AdBlocker();
 const companionServer = new CompanionServer();
 const customCss = new CustomCSS();
 const discordPresence = new DiscordPresence();
@@ -368,7 +370,8 @@ const store = new Conf<StoreSchema>({
       companionServerAuthTokens: null,
       companionServerCORSWildcardEnabled: false,
       discordPresenceEnabled: false,
-      lastFMEnabled: false
+      lastFMEnabled: false,
+      adBlockerEnabled: true
     },
     shortcuts: {
       playPause: "",
@@ -421,6 +424,11 @@ const store = new Conf<StoreSchema>({
     ">=2.0.7": store => {
       if (!store.has("appearance.trayIconStyle")) {
         store.set("appearance.trayIconStyle", 0);
+      }
+    },
+    ">=2.0.12": store => {
+      if (!store.has("integrations.adBlockerEnabled")) {
+        store.set("integrations.adBlockerEnabled", true);
       }
     }
   }
@@ -546,6 +554,17 @@ store.onDidAnyChange(async (newState, oldState) => {
   } else if (!newState.integrations.lastFMEnabled && oldState.integrations.lastFMEnabled) {
     lastFMScrobbler.disable();
     log.info("Integration disabled: Last.fm");
+  }
+
+  if (newState.integrations.adBlockerEnabled) {
+    adBlocker.provide();
+  }
+  if (newState.integrations.adBlockerEnabled && !oldState.integrations.adBlockerEnabled) {
+    adBlocker.enable();
+    log.info("Integration enabled: Ad blocker");
+  } else if (!newState.integrations.adBlockerEnabled && oldState.integrations.adBlockerEnabled) {
+    adBlocker.disable();
+    log.info("Integration disabled: Ad blocker");
   }
 
   if (anyShortcutChanged(newState, oldState)) registerShortcuts();
@@ -1951,6 +1970,13 @@ app.on("ready", async () => {
     lastFMScrobbler.provide(store, memoryStore);
     lastFMScrobbler.enable();
     log.info("Integration enabled: Last.fm");
+  }
+
+  // AdBlocker
+  if (store.get("integrations").adBlockerEnabled) {
+    adBlocker.provide();
+    adBlocker.enable();
+    log.info("Integration enabled: Ad blocker");
   }
 
   nativeTheme.on("updated", setTrayIcon);
