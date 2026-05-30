@@ -18,7 +18,7 @@ export default class AdBlocker implements IIntegration {
 
     const cacheFile = path.join(app.getPath("userData"), "adblocker-cache.bin");
 
-    this.blockerReady = ElectronBlocker.fromPrebuiltAdsAndTracking(fetch, {
+    this.blockerReady = ElectronBlocker.fromPrebuiltFull(fetch, {
       path: cacheFile,
       read: p => import("fs/promises").then(fs => fs.readFile(p)),
       write: (p, data) => import("fs/promises").then(fs => fs.writeFile(p, data))
@@ -26,7 +26,6 @@ export default class AdBlocker implements IIntegration {
       .then(blocker => {
         this.blocker = blocker;
         log.info("Ad blocker: filter lists ready");
-        if (this.isEnabled) this.attach(blocker);
         return blocker;
       })
       .catch(err => {
