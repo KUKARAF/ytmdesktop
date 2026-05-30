@@ -1,5 +1,18 @@
 import { execSync } from "node:child_process";
+import type { Plugin } from "vite";
 import { defineConfig } from "vite";
+
+const adblockerPreloadShim: Plugin = {
+  name: "adblocker-preload-shim",
+  load(id) {
+    if (id.includes("adblocker-electron") && id.includes("preload_path")) {
+      return `export const PRELOAD_PATH = require('path').join(__dirname, 'noop-preload.js');`;
+    }
+  },
+  generateBundle() {
+    this.emitFile({ type: "asset", fileName: "noop-preload.js", source: "" });
+  }
+};
 
 let gitBranch: string = "";
 try {
@@ -26,7 +39,8 @@ export default defineConfig({
   build: {
     outDir: ".vite/main",
     rollupOptions: {
-      external: ["bufferutil", "utf-8-validate", /@cliqz\//]
+      external: ["bufferutil", "utf-8-validate"],
+      plugins: [adblockerPreloadShim]
     }
   },
   define: {
