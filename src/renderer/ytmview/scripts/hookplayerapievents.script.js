@@ -63,7 +63,15 @@
       window.ytmd.sendVideoData(videoDetails, playlistId, album, likeStatus, hasFullMetadata);
     }
   });
+  let prevAdPlaying = ytmStore.getState().player.adPlaying;
   ytmStore.subscribe(() => {
+    const adPlaying = ytmStore.getState().player.adPlaying;
+    if (adPlaying && !prevAdPlaying) {
+      try {
+        document.querySelector("ytmusic-app-layout>ytmusic-player-bar").playerApi.nextVideo();
+      } catch (_) {}
+    }
+    prevAdPlaying = adPlaying;
     sendStoreState();
   });
   window.addEventListener("yt-action", e => {
