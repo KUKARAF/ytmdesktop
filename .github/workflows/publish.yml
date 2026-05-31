@@ -53,3 +53,23 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           YTMD_UPDATE_FEED_OWNER: ${{ vars.YTMD_UPDATE_FEED_OWNER }}
           YTMD_UPDATE_FEED_REPOSITORY: ${{ vars.YTMD_UPDATE_FEED_REPOSITORY }}
+
+  finalize:
+    needs: build
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Publish release
+        run: gh release edit "${{ github.ref_name }}" --draft=false --repo "${{ github.repository }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger Flatpak manifest update
+        run: |
+          gh api repos/kukaraf/app.ytmdesktop.Ytmdesktop/dispatches \
+            --method POST \
+            --field event_type=new-release \
+            --field "client_payload[version]=${{ github.ref_name }}"
+        env:
+          GH_TOKEN: ${{ secrets.FLATPAK_DISPATCH_TOKEN }}
