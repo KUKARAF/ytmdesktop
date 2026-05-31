@@ -82,6 +82,10 @@ function createStyleSheet() {
       .ytmd-player-bar-control.sleep-timer-button.active {
         color: #FFFFFF;
       }
+
+      ytmusic-mealbar-promo-renderer {
+        display: none !important;
+      }
     `)
   );
   document.head.appendChild(css);
@@ -172,6 +176,18 @@ async function hideChromecastButton() {
 
 async function hookPlayerApiEvents() {
   (await webFrame.executeJavaScript(hookPlayerApiEventsScript))();
+}
+
+function dismissPremiumUpsells() {
+  const tryDismiss = () => {
+    document.querySelectorAll<HTMLElement>("ytmusic-mealbar-promo-renderer").forEach(el => {
+      el.querySelector<HTMLElement>("#dismiss-button button, .dismiss-button button")?.click();
+    });
+  };
+
+  const observer = new MutationObserver(tryDismiss);
+  observer.observe(document.body, { childList: true, subtree: true });
+  tryDismiss();
 }
 
 function overrideHistoryButtonDisplay() {
@@ -271,6 +287,7 @@ window.addEventListener("load", async () => {
   });
 
   createStyleSheet();
+  dismissPremiumUpsells();
   createNavigationMenuArrows();
   createKeyboardNavigation();
   await createAdditionalPlayerBarControls();
